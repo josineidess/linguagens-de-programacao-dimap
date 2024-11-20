@@ -38,7 +38,7 @@ int liberaMemoria(float *ptr) {
    ptr = NULL;
 
     if (ptr == NULL) {
-      printf("Memória liberada com sucesso.");
+      printf("Memória liberada com sucesso. ");
       return 0;
    }
 
