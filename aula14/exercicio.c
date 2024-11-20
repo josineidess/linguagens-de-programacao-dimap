@@ -20,7 +20,7 @@ int adicionarPontuacao(float *ptr1) {
 float exibirPontuacao(float *ptr) {
      
     if (ptr == NULL) { 
-        printf("Nenhuma pontuação foi cadastrada."); //perguntar ao professor como validar se tem algum valor na variável
+        printf("Nenhuma pontuação foi cadastrada."); //perguntar ao professor como validar se tem como validar se tem algum valor na variável 
         return 1;
     } 
   
