@@ -1,0 +1,73 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    char nomeProduto[50];
+    float custoProduto;
+    float lucroProduto;
+    float icmsProduto;
+    float ipiProduto;
+    float precoFinalProduto;
+} Produto;
+
+void calcularPrecoFinal(Produto *item) {
+    item->icmsProduto = ((item->custoProduto + item->lucroProduto) * 0.17) / 0.83;
+    item->ipiProduto = (item->custoProduto + item->lucroProduto + item->icmsProduto) * 0.2;
+    item->precoFinalProduto = item->custoProduto + item->lucroProduto + item->icmsProduto + item->ipiProduto;
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        printf("Uso: %s <arquivo de dados iniciais> <arquivo de resultado>\n", argv[0]);
+        return 1;
+    }
+
+    FILE *arquivoEntrada = fopen(argv[1], "r");
+    if (arquivoEntrada == NULL) {
+        perror("Erro ao abrir o arquivo de entrada");
+        return 1;
+    }
+
+    int quantidadeProdutos;
+    fscanf(arquivoEntrada, "%d", &quantidadeProdutos);
+
+    Produto *listaProdutos = (Produto *)malloc(quantidadeProdutos * sizeof(Produto));
+    if (listaProdutos == NULL) {
+        perror("Erro ao alocar memória");
+        fclose(arquivoEntrada);
+        return 1;
+    }
+
+    for (int i = 0; i < quantidadeProdutos; i++) {
+        fscanf(arquivoEntrada, "%s %f %f", listaProdutos[i].nomeProduto, &listaProdutos[i].custoProduto, &listaProdutos[i].lucroProduto);
+        calcularPrecoFinal(&listaProdutos[i]);
+    }
+
+    fclose(arquivoEntrada);
+
+    FILE *arquivoSaida = fopen(argv[2], "w");
+    if (arquivoSaida == NULL) {
+        perror("Erro ao abrir o arquivo de saída");
+        free(listaProdutos);
+        return 1;
+    }
+
+    fprintf(arquivoSaida, "------------------------------------------------\n");
+    fprintf(arquivoSaida, "Cálculo do Preço final dos produtos\n");
+    fprintf(arquivoSaida, "------------------------------------------------\n");
+
+    for (int i = 0; i < quantidadeProdutos; i++) {
+        fprintf(arquivoSaida, "Produto %s\n", listaProdutos[i].nomeProduto);
+        fprintf(arquivoSaida, "Custo = R$ %.2f\n", listaProdutos[i].custoProduto);
+        fprintf(arquivoSaida, "Lucro = R$ %.2f\n", listaProdutos[i].lucroProduto);
+        fprintf(arquivoSaida, "ICMS = R$ %.2f\n", listaProdutos[i].icmsProduto);
+        fprintf(arquivoSaida, "IPI = R$ %.2f\n", listaProdutos[i].ipiProduto);
+        fprintf(arquivoSaida, "Preço Final = R$ %.2f\n", listaProdutos[i].precoFinalProduto);
+        fprintf(arquivoSaida, "--------------------------------------\n");
+    }
+
+    fclose(arquivoSaida);
+    free(listaProdutos);
+    return 0;
+}
