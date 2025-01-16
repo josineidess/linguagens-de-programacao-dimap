@@ -1,0 +1,107 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct {
+    char nome[50];
+    int faltas;
+    float notas[4];  // 3 notas + 1 para a 4ª avaliação
+    float mediaP;    // Média ponderada
+    float mediaA;    // Média aritmética
+    char resultado[3]; // Resultado: "AP", "RF", "RN"
+} Aluno;
+
+void calcularMedia(Aluno *aluno, int carga_horaria) {
+    // Cálculo da média ponderada (pesos 4, 5, 6)
+    aluno->mediaP = (aluno->notas[0] * 4 + aluno->notas[1] * 5 + aluno->notas[2] * 6) / 15.0;
+
+    // Cálculo do percentual de faltas
+    float percentualFaltas = (float)aluno->faltas / (carga_horaria / 50.0) * 100.0;
+
+    // Verificação de reprovação por falta
+    if (percentualFaltas > 25.0) {
+        strcpy(aluno->resultado, "RF");
+        aluno->mediaA = aluno->mediaP;  // Para reprovados por falta, a média final será a média ponderada
+        return;
+    }
+
+    // Verificação de aprovação por média ponderada
+    if (aluno->mediaP >= 7.0) {
+        strcpy(aluno->resultado, "AP");
+        aluno->mediaA = aluno->mediaP;  // Média não muda se o aluno for aprovado diretamente
+        return;
+    } else if (aluno->mediaP >= 3.0) {
+        // Cálculo da média aritmética caso necessário (para alunos em recuperação)
+        aluno->mediaA = (aluno->mediaP + aluno->notas[3]) / 2.0;
+        if (aluno->mediaA >= 5.0) {
+            strcpy(aluno->resultado, "AP");
+        } else {
+            strcpy(aluno->resultado, "RN");
+        }
+    } else {
+        strcpy(aluno->resultado, "RN");
+        aluno->mediaA = aluno->mediaP;  // Média é calculada mesmo para reprovados
+    }
+}
+
+int main(int argc, char *argv[]) {
+    if (argc != 3) {
+        printf("Uso: %s <arquivo de dados iniciais> <arquivo de resultado>\n", argv[0]);
+        return 1;
+    }
+
+    FILE *entrada = fopen(argv[1], "r");
+    if (entrada == NULL) {
+        perror("Erro ao abrir o arquivo de entrada");
+        return 1;
+    }
+
+    int numAlunos, carga_horaria;
+    fscanf(entrada, "%d", &numAlunos);
+    fscanf(entrada, "%d", &carga_horaria);
+
+    Aluno *alunos = (Aluno *)malloc(numAlunos * sizeof(Aluno));
+    if (alunos == NULL) {
+        perror("Erro ao alocar memória");
+        fclose(entrada);
+        return 1;
+    }
+
+    for (int i = 0; i < numAlunos; i++) {
+        fscanf(entrada, "%s %d %f %f %f %f", alunos[i].nome, &alunos[i].faltas,
+               &alunos[i].notas[0], &alunos[i].notas[1], &alunos[i].notas[2], &alunos[i].notas[3]);
+        calcularMedia(&alunos[i], carga_horaria);
+    }
+
+    fclose(entrada);
+
+    FILE *saida = fopen(argv[2], "w");
+    if (saida == NULL) {
+        perror("Erro ao abrir o arquivo de saída");
+        free(alunos);
+        return 1;
+    }
+
+    // Impressão do cabeçalho
+    fprintf(saida, "Nomes\tResultados\tMédias finais\tfaltas\n");
+
+    // Impressão dos resultados dos alunos
+    for (int i = 0; i < numAlunos; i++) {
+        // Definir a média final
+        float mediaFinal;
+        if (strcmp(alunos[i].resultado, "RF") == 0) {
+            mediaFinal = alunos[i].mediaP; // Para reprovado por falta, usa-se a média ponderada
+        } else if (strcmp(alunos[i].resultado, "AP") == 0) {
+            mediaFinal = alunos[i].mediaP; // Para aprovado, usa-se a média ponderada
+        } else {
+            mediaFinal = alunos[i].mediaA; // Para reprovado por nota, usa-se a média aritmética
+        }
+
+        // Impressão no formato solicitado
+        fprintf(saida, "%s\t%s\t%.1f\t%d\n", alunos[i].nome, alunos[i].resultado, mediaFinal, alunos[i].faltas);
+    }
+
+    fclose(saida);
+    free(alunos);
+    return 0;
+}
